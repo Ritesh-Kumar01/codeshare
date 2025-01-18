@@ -2,11 +2,12 @@ import React, { useEffect, useState, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import { ref, onValue, set } from 'firebase/database';
 import { db } from '../firebase';
-import { FaCopy, FaUserFriends } from 'react-icons/fa';
+import { FaCopy, FaUserFriends, FaCheck } from 'react-icons/fa';
 
 const EditorPage = ({ username }) => {
   const [code, setCode] = useState('// Start coding here...');
   const [users, setUsers] = useState([]);
+  const [copying, setCopying] = useState(false);
   const editorRef = useRef(null);
 
   useEffect(() => {
@@ -58,10 +59,16 @@ const EditorPage = ({ username }) => {
     editorRef.current = editor;
   };
 
-  const copyCode = () => {
+  const copyCode = async () => {
     if (editorRef.current) {
       const value = editorRef.current.getValue();
-      navigator.clipboard.writeText(value);
+      try {
+        await navigator.clipboard.writeText(value);
+        setCopying(true);
+        setTimeout(() => setCopying(false), 2000); // Reset after 2 seconds
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
     }
   };
 
@@ -77,13 +84,64 @@ const EditorPage = ({ username }) => {
               <FaUserFriends className="mr-2" />
               <span>{users.length} users online</span>
             </div>
-            <button
+            {/* <button
               onClick={copyCode}
-              className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 
-                       rounded-lg text-white transition-colors"
+              disabled={copying}
+              className={`flex items-center px-4 py-2 rounded-lg text-white transition-all duration-300 transform
+                ${copying 
+                  ? 'bg-green-600 hover:bg-green-700 scale-105' 
+                  : 'bg-blue-600 hover:bg-blue-700 hover:scale-105'
+                } active:scale-95`}
             >
-              <FaCopy className="mr-2" /> Copy Code
-            </button>
+              {copying ? (
+                <>
+                  <FaCheck className="mr-2 animate-bounce" />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <FaCopy className="mr-2" />
+                  Copy Code
+                </>
+              )}
+            </button> */}
+
+<button
+  onClick={copyCode}
+  disabled={copying}
+  className={`flex items-center px-4 py-2 rounded-lg text-white 
+    transition-all duration-300 ease-in-out transform relative
+    overflow-hidden shadow-lg hover:shadow-xl
+    ${copying 
+      ? 'bg-green-600 hover:bg-green-700' 
+      : 'bg-blue-600 hover:bg-blue-700'
+    }
+    hover:-translate-y-1 hover:scale-105
+    active:translate-y-0 active:scale-95
+    disabled:opacity-75 disabled:cursor-default
+    before:absolute before:top-0 before:left-0 before:w-full before:h-full
+    before:bg-white before:opacity-0 before:transition-opacity
+    hover:before:opacity-10
+  `}
+>
+  <div className={`flex items-center justify-center w-full
+    ${copying ? 'animate-[slideUp_0.3s_ease-in-out]' : 'animate-[slideDown_0.3s_ease-in-out]'}`}
+  >
+    {copying ? (
+      <>
+        <FaCheck className="mr-2 animate-[spin_0.5s_ease-out]" />
+        <span className="animate-[fadeIn_0.3s_ease-in-out]">Copied!</span>
+      </>
+    ) : (
+      <>
+        <FaCopy className="mr-2 group-hover:rotate-12 transition-transform duration-300" />
+        <span>Copy Code</span>
+      </>
+    )}
+  </div>
+</button>
+
+
           </div>
         </div>
       </header>
